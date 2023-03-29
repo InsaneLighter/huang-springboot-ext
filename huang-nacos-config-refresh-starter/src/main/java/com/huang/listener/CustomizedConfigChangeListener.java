@@ -19,6 +19,7 @@ import javax.annotation.PostConstruct;
  * Created by Huang
  * className: ConfigChangeListener
  * Description: 配置变更监听器
+ * TODO 更换监听器AbstractSharedListener
  */
 @Slf4j
 public class CustomizedConfigChangeListener extends AbstractConfigChangeListener {
