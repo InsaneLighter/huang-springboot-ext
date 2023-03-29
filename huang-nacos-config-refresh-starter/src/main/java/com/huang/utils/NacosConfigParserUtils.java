@@ -59,7 +59,7 @@ public class NacosConfigParserUtils {
      * @param source
      * @return
      */
-    public static final Map<String, Object> getFlattenedMap(Map<String, Object> source) {
+    public static Map<String, Object> getFlattenedMap(Map<String, Object> source) {
         Map<String, Object> result = new LinkedHashMap<>(128);
         buildFlattenedMap(result, source, null);
         return result;

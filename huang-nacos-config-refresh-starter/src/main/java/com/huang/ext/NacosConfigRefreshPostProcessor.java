@@ -19,9 +19,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
+import org.yaml.snakeyaml.Yaml;
+
 import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -39,10 +40,6 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
      * nacos对应的propertySource的类名称
      */
     private static final String NACOS_PROPERTY_SOURCE_CLASS_NAME = "com.alibaba.nacos.spring.core.env.NacosPropertySource";
-    /**
-     * nacos配置文件类型
-     */
-    private static final String NACOS_CONFIG_TYPE = "spring.cloud.nacos.config.file-extension";
     /**
      * 存放被@Value和@NacosValue修饰的属性 key = 占位符 value = 属性集合
      */
@@ -73,7 +70,7 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
         try {
             newConfigMap = parseNacosConfigContext((String) event.getSource());
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("nacos配置内容解析异常: {}", e);
         }
         // 刷新变更对象的值
         refreshTargetObjectFieldValue(newConfigMap);
@@ -165,20 +162,15 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
      * @throws Exception
      */
     private Map<String, Object> parseNacosConfigContext(String newContent) throws Exception {
-        // 解析nacos推送的配置内容为键值对
-        String type = standardEnvironment.getProperty(NACOS_CONFIG_TYPE);
-
-        Map<String, Object> newConfigMap = new HashMap<>(16);
-        Properties newProps = new Properties();
-        newProps.load(new StringReader(newContent));
-        newConfigMap = new HashMap<>((Map) newProps);
-        /*if (ConfigType.YAML.getType().equals(type)) {
-            newConfigMap = (new Yaml()).load(newContent);
-        } else if (ConfigType.PROPERTIES.getType().equals(type)) {
+        Map<String, Object> newConfigMap;
+        Object yamlObj = new Yaml().load(newContent);
+        if(yamlObj instanceof Map){
+            newConfigMap = (Map<String, Object>) yamlObj;
+        }else {
             Properties newProps = new Properties();
             newProps.load(new StringReader(newContent));
             newConfigMap = new HashMap<>((Map) newProps);
-        }*/
+        }
         // 筛选出正确的配置
         return NacosConfigParserUtils.getFlattenedMap(newConfigMap);
     }
