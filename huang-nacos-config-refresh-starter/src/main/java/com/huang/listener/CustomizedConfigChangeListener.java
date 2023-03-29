@@ -3,7 +3,6 @@ package com.huang.listener;
 import com.alibaba.cloud.nacos.NacosConfigProperties;
 import com.alibaba.cloud.nacos.NacosPropertySourceRepository;
 import com.alibaba.cloud.nacos.client.NacosPropertySource;
-import com.alibaba.cloud.nacos.refresh.NacosContextRefresher;
 import com.alibaba.nacos.api.NacosFactory;
 import com.alibaba.nacos.api.config.ConfigChangeEvent;
 import com.alibaba.nacos.api.config.ConfigService;
@@ -11,9 +10,7 @@ import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.client.config.listener.impl.AbstractConfigChangeListener;
 import com.huang.event.NacosConfigChangeEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
@@ -24,22 +21,21 @@ import javax.annotation.PostConstruct;
  * Description: 配置变更监听器
  */
 @Slf4j
-@Component
-public class ConfigChangeListener extends AbstractConfigChangeListener {
-    ConfigService configService;
+public class CustomizedConfigChangeListener extends AbstractConfigChangeListener {
 
-    @Autowired
-    NacosContextRefresher nacosContextRefresher;
+    private ConfigService configService;
 
-    @Autowired
-    NacosConfigProperties nacosConfigProperties;
+    private final ApplicationContext applicationContext;
 
-    @Autowired
-    ApplicationContext applicationContext;
+    public CustomizedConfigChangeListener(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
 
     @PostConstruct
     public void init() throws NacosException {
+        log.info("ConfigChangeListener init starting");
         //手动获取configService
+        NacosConfigProperties nacosConfigProperties = applicationContext.getBean(NacosConfigProperties.class);
         configService = NacosFactory.createConfigService(nacosConfigProperties.assembleConfigServiceProperties());
         //手动注册监听器（同nacos需要打开refresh属性）
         for (NacosPropertySource propertySource : NacosPropertySourceRepository.getAll()) {
@@ -49,7 +45,9 @@ public class ConfigChangeListener extends AbstractConfigChangeListener {
             String dataId = propertySource.getDataId();
             String group = propertySource.getGroup();
             registerListener(group, dataId);
+            log.info("ConfigChangeListener registerListener : group({}) dataId({})", group, dataId);
         }
+        log.info("ConfigChangeListener init end");
     }
 
     /**
@@ -57,6 +55,7 @@ public class ConfigChangeListener extends AbstractConfigChangeListener {
      */
     @Override
     public void receiveConfigInfo(String configInfo) {
+        log.info("ConfigChangeListener config update : {}", configInfo);
         NacosConfigChangeEvent configUpdateEvent = new NacosConfigChangeEvent(configInfo);
         applicationContext.publishEvent(configUpdateEvent);
     }

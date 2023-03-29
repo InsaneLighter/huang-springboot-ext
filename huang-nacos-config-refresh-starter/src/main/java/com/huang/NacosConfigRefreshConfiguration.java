@@ -1,6 +1,8 @@
 package com.huang;
 
 import com.huang.ext.NacosConfigRefreshPostProcessor;
+import com.huang.listener.CustomizedConfigChangeListener;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,8 +14,15 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class NacosConfigRefreshConfiguration {
+
     @Bean
     public NacosConfigRefreshPostProcessor configRefreshPostProcessor(){
         return new NacosConfigRefreshPostProcessor();
     }
+
+    @Bean
+    public CustomizedConfigChangeListener customizedConfigChangeListener(ApplicationContext applicationContext){
+        return new CustomizedConfigChangeListener(applicationContext);
+    }
+
 }
