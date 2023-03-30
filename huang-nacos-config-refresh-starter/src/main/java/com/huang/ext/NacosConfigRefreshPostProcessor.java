@@ -1,6 +1,8 @@
 package com.huang.ext;
 
+import com.alibaba.cloud.nacos.parser.NacosDataParserHandler;
 import com.alibaba.nacos.api.config.ConfigChangeItem;
+import com.alibaba.nacos.api.config.ConfigType;
 import com.alibaba.nacos.api.config.PropertyChangeType;
 import com.alibaba.nacos.api.config.annotation.NacosValue;
 import com.alibaba.spring.beans.factory.annotation.AbstractAnnotationBeanPostProcessor;
@@ -21,6 +23,7 @@ import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.StringReader;
@@ -66,16 +69,17 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
     @Override
     public void onApplicationEvent(NacosConfigChangeEvent event) {
         // 将配置内容解析成键值对
-        Map<String, Object> newConfigMap = null;
+        Map<String, Object> newConfigMap;
         try {
-            newConfigMap = parseNacosConfigContext((String) event.getSource());
+            ConfigData configData = (ConfigData) event.getSource();
+            newConfigMap = parseConfigContext(configData);
+            // 刷新变更对象的值
+            refreshTargetObjectFieldValue(newConfigMap);
+            // 当前配置指向最新的配置
+            currentPlaceholderConfigMap = newConfigMap;
         } catch (Exception e) {
-            log.error("nacos配置内容解析异常: {}", e);
+            log.error("nacos配置内容解析异常: {}", e.toString());
         }
-        // 刷新变更对象的值
-        refreshTargetObjectFieldValue(newConfigMap);
-        // 当前配置指向最新的配置
-        currentPlaceholderConfigMap = newConfigMap;
     }
 
     @Override
@@ -105,7 +109,7 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
 
     @Override
     protected String buildInjectedObjectCacheKey(AnnotationAttributes attributes, Object bean, String beanName, Class<?> injectedType, InjectionMetadata.InjectedElement injectedElement) {
-            return bean.getClass().getName() + "#" + injectedElement.getMember().getName();
+        return bean.getClass().getName() + "#" + injectedElement.getMember().getName();
     }
 
     @Override
@@ -129,6 +133,9 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
      * @param newConfigMap
      */
     private void refreshTargetObjectFieldValue(Map<String, Object> newConfigMap) {
+        if (newConfigMap == null) {
+            return;
+        }
         // 对比两次配置内容，筛选出变更后的配置项
         Map<String, ConfigChangeItem> configChangeItemMap = NacosConfigParserUtils.filterChangeData(currentPlaceholderConfigMap, newConfigMap);
 
@@ -157,22 +164,39 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
     /**
      * 解析nacos的配置
      *
-     * @param newContent
+     * @param configData
      * @return
      * @throws Exception
      */
-    private Map<String, Object> parseNacosConfigContext(String newContent) throws Exception {
+    private Map<String, Object> parseConfigContext(ConfigData configData) throws Exception {
         Map<String, Object> newConfigMap;
-        Object yamlObj = new Yaml().load(newContent);
-        if(yamlObj instanceof Map){
-            newConfigMap = (Map<String, Object>) yamlObj;
-        }else {
-            Properties newProps = new Properties();
-            newProps.load(new StringReader(newContent));
-            newConfigMap = new HashMap<>((Map) newProps);
+        String fileExtension = NacosDataParserHandler.getInstance().getFileExtension(configData.getDataId());
+        Boolean validType = ConfigType.isValidType(fileExtension);
+        if (validType) {
+            newConfigMap = convertContentToMap(fileExtension,configData.getContent());
+        } else {
+            throw new Exception(String.format(
+                    "配置文件类型解析异常, dataId=[%s], group=[%s]",
+                    configData.getDataId(),
+                    configData.getGroup()));
         }
         // 筛选出正确的配置
         return NacosConfigParserUtils.getFlattenedMap(newConfigMap);
+    }
+
+    private Map<String, Object> convertContentToMap(String fileExtension, String content) throws Exception {
+        if(StringUtils.isEmpty(fileExtension)){
+            throw new Exception("配置文件fileExtension为空");
+        }
+        Map<String, Object> newConfigMap = new HashMap<>();
+        if (ConfigType.YAML.getType().equals(fileExtension)) {
+            newConfigMap = (new Yaml()).load(content);
+        } else if (ConfigType.PROPERTIES.getType().equals(fileExtension)) {
+            Properties newProps = new Properties();
+            newProps.load(new StringReader(content));
+            newConfigMap = new HashMap<>((Map) newProps);
+        }
+        return newConfigMap;
     }
 
 
@@ -205,7 +229,6 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
 
     /**
      * 反射修改变更的对象属性值
-     *
      */
     private void updateFieldValue(String key, String newValue, String oldValue) {
         List<FieldInstance> fieldInstances = PLACEHOLDER_VALUE_TARGET_MAP.get(key);

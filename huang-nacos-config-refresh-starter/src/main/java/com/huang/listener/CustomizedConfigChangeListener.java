@@ -4,11 +4,11 @@ import com.alibaba.cloud.nacos.NacosConfigProperties;
 import com.alibaba.cloud.nacos.NacosPropertySourceRepository;
 import com.alibaba.cloud.nacos.client.NacosPropertySource;
 import com.alibaba.nacos.api.NacosFactory;
-import com.alibaba.nacos.api.config.ConfigChangeEvent;
 import com.alibaba.nacos.api.config.ConfigService;
+import com.alibaba.nacos.api.config.listener.AbstractSharedListener;
 import com.alibaba.nacos.api.exception.NacosException;
-import com.alibaba.nacos.client.config.listener.impl.AbstractConfigChangeListener;
 import com.huang.event.NacosConfigChangeEvent;
+import com.huang.ext.ConfigData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 
@@ -22,7 +22,7 @@ import javax.annotation.PostConstruct;
  * TODO 更换监听器AbstractSharedListener
  */
 @Slf4j
-public class CustomizedConfigChangeListener extends AbstractConfigChangeListener {
+public class CustomizedConfigChangeListener extends AbstractSharedListener {
 
     private ConfigService configService;
 
@@ -55,15 +55,11 @@ public class CustomizedConfigChangeListener extends AbstractConfigChangeListener
      * 监听配置变更并发布事件
      */
     @Override
-    public void receiveConfigInfo(String configInfo) {
-        log.info("ConfigChangeListener config update : {}", configInfo);
-        NacosConfigChangeEvent configUpdateEvent = new NacosConfigChangeEvent(configInfo);
+    public void innerReceive(String dataId, String group, String configInfo) {
+        log.info("ConfigChangeListener config update : dataId-{} group-{} config-[{}]", dataId, group, configInfo);
+        ConfigData configData = new ConfigData(dataId, group, configInfo);
+        NacosConfigChangeEvent configUpdateEvent = new NacosConfigChangeEvent(configData);
         applicationContext.publishEvent(configUpdateEvent);
-    }
-
-    @Override
-    public void receiveConfigChange(ConfigChangeEvent configChangeEvent) {
-        //ignore
     }
 
     /**
