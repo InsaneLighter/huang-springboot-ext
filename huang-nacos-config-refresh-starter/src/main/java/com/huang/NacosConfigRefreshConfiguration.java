@@ -17,7 +17,14 @@ public class NacosConfigRefreshConfiguration {
 
     @Bean
     public NacosConfigRefreshPostProcessor configRefreshPostProcessor(){
-        return new NacosConfigRefreshPostProcessor();
+        NacosConfigRefreshPostProcessor nacosConfigRefreshPostProcessor = new NacosConfigRefreshPostProcessor();
+        System.out.println("" +
+                "    //    / /                                           //   ) )                    //  ) )                  //   ) )           //  ) )                               \n" +
+                "   //___ / /           ___       __      ___           //         ___       __   __//__  ( )  ___           //___/ /   ___   __//__  __      ___      ___     / __    \n" +
+                "  / ___   / //   / / //   ) ) //   ) ) //   ) ) ____  //        //   ) ) //   ) ) //    / / //   ) ) ____  / ___ (   //___) ) //   //  ) ) //___) ) ((   ) ) //   ) ) \n" +
+                " //    / / //   / / //   / / //   / / ((___/ /       //        //   / / //   / / //    / / ((___/ /       //   | |  //       //   //      //         \\ \\  //   / /  \n" +
+                "//    / / ((___( ( ((___( ( //   / /   //__         ((____/ / ((___/ / //   / / //    / /   //__         //    | | ((____   //   //      ((____   //   ) ) //   / /   \n");
+        return nacosConfigRefreshPostProcessor;
     }
 
     @Bean
