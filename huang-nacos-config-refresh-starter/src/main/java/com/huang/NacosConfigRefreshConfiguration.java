@@ -2,6 +2,7 @@ package com.huang;
 
 import com.huang.ext.NacosConfigRefreshPostProcessor;
 import com.huang.listener.CustomizedConfigChangeListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
  * Description:
  */
 @Configuration
+@ConditionalOnProperty(prefix = "spring.cloud.nacos.config", name = "refresh-enabled", havingValue = "true", matchIfMissing = false)
 public class NacosConfigRefreshConfiguration {
 
     @Bean

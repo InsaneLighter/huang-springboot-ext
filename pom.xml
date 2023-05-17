@@ -12,6 +12,7 @@
         <module>huang-nacos-config-refresh-starter</module>
         <module>huang-knife-starter</module>
         <module>huang-common</module>
+        <module>huang-redis-mq-starter</module>
     </modules>
 
     <properties>
