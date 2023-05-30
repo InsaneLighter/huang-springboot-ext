@@ -1,1 +1,2 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.huang.config.Knife4jConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.huang.config.Knife4jConfiguration,\
+  com.huang.config.SwaggerSpringBoot2611AdapterAutoConfiguration

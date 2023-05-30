@@ -3,6 +3,7 @@ package com.huang.config;
 import com.huang.properties.KnifeProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -61,5 +62,10 @@ public class Knife4jConfiguration {
                 .licenseUrl(licenseUrl)
                 .contact(contact)
                 .build();
+    }
+
+    @Bean
+    public SwaggerPrinter swaggerPrinter(ApplicationContext context) {
+        return new SwaggerPrinter(context);
     }
 }
