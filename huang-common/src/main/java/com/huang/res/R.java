@@ -1,5 +1,8 @@
 package com.huang.res;
 
+import com.alibaba.fastjson.JSON;
+
+import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 
 /**
@@ -95,6 +98,17 @@ public class R<T> implements Serializable {
 
     public static <T> R<T> error(int code, String message, T data) {
         return new R<>(code, message, data);
+    }
+
+    // 直接通过response返回json数据
+    public static void responseJson(HttpServletResponse response, R r) {
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
+        try {
+            response.getWriter().print(JSON.toJSONString(r));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
