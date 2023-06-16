@@ -1,9 +1,8 @@
 package com.huang.res;
 
 import com.alibaba.fastjson.JSON;
-
 import javax.servlet.http.HttpServletResponse;
-import java.io.Serializable;
+import java.io.*;
 
 /**
  * @Time 2023-04-24
@@ -106,6 +105,37 @@ public class R<T> implements Serializable {
         response.setContentType("application/json;charset=UTF-8");
         try {
             response.getWriter().print(JSON.toJSONString(r));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 直接通过response返回文件
+    public static void responseFile(HttpServletResponse response, File file) {
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment;filename=" + file.getName());
+        try {
+            // file转byte[]
+            FileReader fileReader = new FileReader(file);
+            long len = file.length();
+            if (len >= Integer.MAX_VALUE) {
+                throw new RuntimeException("File is larger then max array size");
+            }
+
+            byte[] bytes = new byte[(int) len];
+            int readLength;
+            try (FileInputStream in = new FileInputStream(file)) {
+                readLength = in.read(bytes);
+                if (readLength < len) {
+                    throw new IOException(String.format("File length is [%s] but read [%s]!", len, readLength));
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            // 静默关闭
+            // 写入response
+            response.getOutputStream().write(bytes);
         } catch (Exception e) {
             e.printStackTrace();
         }
