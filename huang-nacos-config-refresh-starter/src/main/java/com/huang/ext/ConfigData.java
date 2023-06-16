@@ -6,7 +6,7 @@ import lombok.Data;
  * @Time 2023-03-30 9:46
  * Created by Huang
  * className: ConfigData
- * Description:
+ * Description: 配置数据
  */
 @Data
 public class ConfigData {

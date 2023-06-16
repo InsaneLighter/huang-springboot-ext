@@ -96,7 +96,6 @@ public class NacosConfigRefreshPostProcessor extends AbstractAnnotationBeanPostP
         Field field = (Field) injectedElement.getMember();
         // 属性记录到缓存中
         addFieldInstance(key, field, bean);
-
         // 环境对象中当前属性
         String value = standardEnvironment.getProperty(key);
         // 环境对象不存在该值，就取默认值
